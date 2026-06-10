@@ -32,14 +32,28 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      # Stay green until Cloudflare is configured: skip the deploy steps when the
+      # API token secret is absent instead of failing every push to main.
+      - id: guard
+        run: |
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping Worker deploy."
+          fi
+      - if: steps.guard.outputs.configured == 'true'
+        uses: actions/checkout@v4
+      - if: steps.guard.outputs.configured == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: worker/package-lock.json
-      - run: npm ci
-      - uses: cloudflare/wrangler-action@v3
+      - if: steps.guard.outputs.configured == 'true'
+        run: npm ci
+      - if: steps.guard.outputs.configured == 'true'
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
