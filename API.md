@@ -10,7 +10,7 @@ Base URL: `https://meditor.dev` (during M1, `https://meditor-share.<account>.wor
 ## POST /api/v1/share
 
 Publish a diagram. No authentication; abuse is bounded by a Cloudflare
-rate-limit (M2), size limits, and short TTLs. `Content-Type: application/json`.
+rate-limit, size limits, and short TTLs. `Content-Type: application/json`.
 
 Request body:
 
@@ -41,7 +41,7 @@ generated server-side; the client never chooses them. Only the SHA-256 of the
 delete token is stored.
 
 Errors: `400` invalid JSON / schema / non-PNG image; `413` decoded image over
-500 KB; `429` rate-limited (M2).
+500 KB; `429` rate-limited.
 
 ## GET /s/:id
 

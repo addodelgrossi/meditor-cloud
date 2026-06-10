@@ -1,13 +1,10 @@
-# Worker code deploy is owned by Wrangler; infrastructure (zone, DNS, KV
-# namespace, rate-limit) is owned by Terraform under ../infra. See API.md.
 name = "meditor-share"
 main = "src/index.ts"
 compatibility_date = "2026-06-01"
 compatibility_flags = ["nodejs_compat"]
 
-# The KV namespace id is produced by Terraform (cloudflare_workers_kv_namespace
-# "meditor-shares") and pasted here. Until M2, run `wrangler kv namespace create
-# SHARES` and use the generated id for local/preview deploys.
+# Create with `wrangler kv namespace create SHARES` and paste the id here.
+# See ../README.md "Provisioning from scratch".
 kv_namespaces = [
   { binding = "SHARES", id = "0a66e5153712471a874cd8a39b21f25d" }
 ]
