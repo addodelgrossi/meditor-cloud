@@ -82,6 +82,8 @@ describe("GET /s/:id", () => {
     // UMD .min.js path which leaves `mermaid` undefined and renders nothing.
     expect(html).toContain("mermaid@11.15.0/+esm");
     expect(html).not.toContain(".min.js/+esm");
+    expect(html).toContain('rel="icon"');
+    expect(html).toContain("data:image/png;base64,");
   });
 
   it("returns a friendly 404 expired page for unknown ids", async () => {

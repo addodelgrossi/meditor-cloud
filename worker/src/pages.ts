@@ -1,4 +1,7 @@
+import { FAVICON_DATA_URI } from "./icons.js";
 import type { ShareRecord } from "./schema.js";
+
+const faviconLink = `<link rel="icon" type="image/png" href="${FAVICON_DATA_URI}">`;
 
 // Pinned to the exact Mermaid release vendored by the macOS app
 // (Sources/Meditor/Resources/Mermaid, updated via script/update_mermaid.sh).
@@ -55,6 +58,7 @@ export function viewerPage({ id, record, baseUrl, now }: ViewerOptions): string 
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
+  ${faviconLink}
   <title>Shared diagram · Meditor</title>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Meditor">
@@ -160,6 +164,7 @@ export function expiredPage(): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
+  ${faviconLink}
   <title>Link expired · Meditor</title>
   <style>
     html, body { margin: 0; height: 100%; font-family: -apple-system, system-ui, sans-serif; }
