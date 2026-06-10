@@ -1,0 +1,20 @@
+# Worker code deploy is owned by Wrangler; infrastructure (zone, DNS, KV
+# namespace, rate-limit) is owned by Terraform under ../infra. See API.md.
+name = "meditor-share"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The KV namespace id is produced by Terraform (cloudflare_workers_kv_namespace
+# "meditor-shares") and pasted here. Until M2, run `wrangler kv namespace create
+# SHARES` and use the generated id for local/preview deploys.
+kv_namespaces = [
+  { binding = "SHARES", id = "REPLACE_WITH_KV_NAMESPACE_ID", preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID" }
+]
+
+# Custom-domain routes are attached in M2 once meditor.dev exists. Until then the
+# worker is reachable at meditor-share.<account>.workers.dev.
+# routes = [
+#   { pattern = "meditor.dev/api/*", zone_name = "meditor.dev" },
+#   { pattern = "meditor.dev/s/*",   zone_name = "meditor.dev" },
+# ]
