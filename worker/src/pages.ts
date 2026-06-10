@@ -4,7 +4,10 @@ import type { ShareRecord } from "./schema.js";
 // (Sources/Meditor/Resources/Mermaid, updated via script/update_mermaid.sh).
 // Same released bytes -> same render. Bump both together.
 const MERMAID_VERSION = "11.15.0";
-const MERMAID_SRC = `https://cdn.jsdelivr.net/npm/mermaid@${MERMAID_VERSION}/dist/mermaid.min.js`;
+// jsDelivr's canonical ESM endpoint exposes a usable `export default`. Appending
+// /+esm to the .min.js path bundles the UMD build instead, whose default export
+// is not the mermaid API — so it must be the bare package@version/+esm form.
+const MERMAID_SRC = `https://cdn.jsdelivr.net/npm/mermaid@${MERMAID_VERSION}/+esm`;
 
 const APP_DOWNLOAD_URL = "https://meditor.dev/";
 const ABUSE_EMAIL = "abuse@meditor.dev";
@@ -100,7 +103,7 @@ export function viewerPage({ id, record, baseUrl, now }: ViewerOptions): string 
   </footer>
   <script id="payload" type="application/json">${payload}</script>
   <script type="module">
-    import mermaid from "${MERMAID_SRC}/+esm";
+    import mermaid from "${MERMAID_SRC}";
     const data = JSON.parse(document.getElementById("payload").textContent);
     const diagram = document.getElementById("diagram");
     const viewport = document.getElementById("viewport");

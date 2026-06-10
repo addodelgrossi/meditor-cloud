@@ -78,6 +78,10 @@ describe("GET /s/:id", () => {
     expect(html).toContain('property="og:image"');
     expect(html).toContain("flowchart TD");
     expect(html).toContain('name="robots" content="noindex"');
+    // Must import the canonical ESM endpoint (a usable default export), not the
+    // UMD .min.js path which leaves `mermaid` undefined and renders nothing.
+    expect(html).toContain("mermaid@11.15.0/+esm");
+    expect(html).not.toContain(".min.js/+esm");
   });
 
   it("returns a friendly 404 expired page for unknown ids", async () => {
