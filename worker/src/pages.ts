@@ -71,28 +71,48 @@ export function viewerPage({ id, record, baseUrl, now }: ViewerOptions): string 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Diagram shared via Meditor">
   <meta name="twitter:image" content="${escapeHtml(ogImageUrl)}">
+  <script>
+    // Apply the saved or system theme before first paint to avoid a flash.
+    (function () {
+      try {
+        var m = localStorage.getItem("meditor-theme");
+        if (m !== "light" && m !== "dark") {
+          m = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.setAttribute("data-theme", m);
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
   <style>
-    :root { color-scheme: light dark; }
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9; --fg: #111827; --panel: #ffffff; --border: #e5e7eb;
+      --muted: #6b7280; --link: #2563eb;
+      --btn-bg: #ffffff; --btn-border: #d1d5db; --btn-hover: #f3f4f6;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0b0e14; --fg: #e5e7eb; --panel: #111827; --border: #1f2937;
+      --muted: #9ca3af; --link: #60a5fa;
+      --btn-bg: #1f2937; --btn-border: #374151; --btn-hover: #374151;
+    }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; font-family: -apple-system, system-ui, sans-serif; }
-    body { display: flex; flex-direction: column; background: #f6f7f9; color: #111827; }
+    body { display: flex; flex-direction: column; background: var(--bg); color: var(--fg); }
     #viewport { flex: 1; position: relative; overflow: hidden; cursor: grab; }
     #viewport.dragging { cursor: grabbing; }
     #diagram { position: absolute; left: 50%; top: 50%; transform-origin: 0 0; }
     #diagram svg { display: block; max-width: none !important; }
-    #error { display: none; position: absolute; inset: 0; place-content: center; text-align: center; padding: 2rem; color: #b91c1c; }
-    footer { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: center; justify-content: space-between; padding: .6rem 1rem; font-size: 13px; background: #fff; border-top: 1px solid #e5e7eb; }
-    footer a { color: #2563eb; text-decoration: none; }
+    #error { display: none; position: absolute; inset: 0; place-content: center; text-align: center; padding: 2rem; color: #ef4444; }
+    footer { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: center; justify-content: space-between; padding: .6rem 1rem; font-size: 13px; background: var(--panel); border-top: 1px solid var(--border); color: var(--fg); }
+    footer a { color: var(--link); text-decoration: none; }
     footer a:hover { text-decoration: underline; }
-    .muted { color: #6b7280; }
-    button { font: inherit; font-size: 13px; padding: .35rem .7rem; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; cursor: pointer; }
-    button:hover { background: #f3f4f6; }
-    @media (prefers-color-scheme: dark) {
-      body { background: #0b0e14; color: #e5e7eb; }
-      footer { background: #111827; border-top-color: #1f2937; }
-      button { background: #1f2937; border-color: #374151; color: #e5e7eb; }
-      button:hover { background: #374151; }
-    }
+    .muted { color: var(--muted); }
+    button { font: inherit; font-size: 13px; padding: .35rem .7rem; border: 1px solid var(--btn-border); border-radius: 6px; background: var(--btn-bg); color: var(--fg); cursor: pointer; }
+    button:hover { background: var(--btn-hover); }
+    #theme-toggle { font-size: 15px; line-height: 1; padding: .3rem .55rem; }
   </style>
 </head>
 <body>
@@ -101,6 +121,7 @@ export function viewerPage({ id, record, baseUrl, now }: ViewerOptions): string 
   <footer>
     <span class="muted">Expires ${escapeHtml(expires)}</span>
     <span style="display:flex; gap:.5rem; align-items:center;">
+      <button id="theme-toggle" type="button" aria-label="Toggle theme">☾</button>
       <button id="copy" type="button">Copy code</button>
       <span>Made with <a href="${escapeHtml(APP_DOWNLOAD_URL)}">Meditor</a> — free for macOS</span>
     </span>
@@ -111,31 +132,59 @@ export function viewerPage({ id, record, baseUrl, now }: ViewerOptions): string 
     const data = JSON.parse(document.getElementById("payload").textContent);
     const diagram = document.getElementById("diagram");
     const viewport = document.getElementById("viewport");
-    let scale = 1, offsetX = 0, offsetY = 0, w = 0, h = 0;
+    const error = document.getElementById("error");
+    const root = document.documentElement;
+    let scale = 1, offsetX = 0, offsetY = 0, w = 0, h = 0, seq = 0;
     const apply = () => {
       diagram.style.width = Math.max(w * scale, 1) + "px";
       diagram.style.height = Math.max(h * scale, 1) + "px";
       diagram.style.transform = "translate(calc(-50% + " + offsetX + "px), calc(-50% + " + offsetY + "px))";
     };
-    try {
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: data.theme, suppressErrorRendering: true });
-      await mermaid.parse(data.code);
-      const { svg } = await mermaid.render("shared-diagram", data.code);
-      diagram.innerHTML = svg;
-      const el = diagram.querySelector("svg");
-      el.querySelectorAll("a").forEach((a) => { a.removeAttribute("href"); a.style.pointerEvents = "none"; });
-      const box = el.viewBox && el.viewBox.baseVal;
-      w = (box && box.width) || el.getBoundingClientRect().width;
-      h = (box && box.height) || el.getBoundingClientRect().height;
-      el.removeAttribute("width"); el.removeAttribute("height");
-      el.style.width = "100%"; el.style.height = "100%";
-      el.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      const pad = 80;
-      scale = Math.min((innerWidth - pad) / w, (innerHeight - pad) / h, 1.15);
-      apply();
-    } catch {
-      document.getElementById("error").style.display = "grid";
-    }
+    // Light view keeps the author's published theme (unless it was dark); dark
+    // view always uses mermaid's dark theme.
+    const themeFor = (mode) => mode === "dark" ? "dark" : (data.theme === "dark" ? "default" : data.theme);
+    const render = async (mode, refit) => {
+      try {
+        error.style.display = "none";
+        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: themeFor(mode), suppressErrorRendering: true });
+        await mermaid.parse(data.code);
+        const { svg } = await mermaid.render("shared-diagram-" + (++seq), data.code);
+        diagram.innerHTML = svg;
+        const el = diagram.querySelector("svg");
+        el.querySelectorAll("a").forEach((a) => { a.removeAttribute("href"); a.style.pointerEvents = "none"; });
+        const box = el.viewBox && el.viewBox.baseVal;
+        w = (box && box.width) || el.getBoundingClientRect().width;
+        h = (box && box.height) || el.getBoundingClientRect().height;
+        el.removeAttribute("width"); el.removeAttribute("height");
+        el.style.width = "100%"; el.style.height = "100%";
+        el.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        if (refit) {
+          const pad = 80;
+          scale = Math.min((innerWidth - pad) / w, (innerHeight - pad) / h, 1.15);
+          offsetX = 0; offsetY = 0;
+        }
+        apply();
+      } catch {
+        error.style.display = "grid";
+      }
+    };
+
+    const toggle = document.getElementById("theme-toggle");
+    let mode = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    const syncToggle = () => {
+      toggle.textContent = mode === "dark" ? "☀" : "☾";
+      toggle.setAttribute("aria-label", mode === "dark" ? "Switch to light theme" : "Switch to dark theme");
+    };
+    syncToggle();
+    toggle.addEventListener("click", () => {
+      mode = mode === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", mode);
+      try { localStorage.setItem("meditor-theme", mode); } catch (e) {}
+      syncToggle();
+      render(mode, false);
+    });
+    render(mode, true);
+
     addEventListener("wheel", (e) => {
       e.preventDefault();
       if (e.metaKey || e.ctrlKey) { scale = Math.max(0.08, Math.min(6, scale * (e.deltaY < 0 ? 1.08 : 0.92))); }

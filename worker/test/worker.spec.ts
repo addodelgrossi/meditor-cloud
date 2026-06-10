@@ -84,6 +84,7 @@ describe("GET /s/:id", () => {
     expect(html).not.toContain(".min.js/+esm");
     expect(html).toContain('rel="icon"');
     expect(html).toContain("data:image/png;base64,");
+    expect(html).toContain('id="theme-toggle"');
   });
 
   it("returns a friendly 404 expired page for unknown ids", async () => {
