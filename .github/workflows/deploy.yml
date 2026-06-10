@@ -32,6 +32,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       # Stay green until Cloudflare is configured: skip the deploy steps when the
       # API token secret is absent instead of failing every push to main.
       - id: guard
@@ -42,8 +43,6 @@ jobs:
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CLOUDFLARE_API_TOKEN not set — skipping Worker deploy."
           fi
-      - if: steps.guard.outputs.configured == 'true'
-        uses: actions/checkout@v4
       - if: steps.guard.outputs.configured == 'true'
         uses: actions/setup-node@v4
         with:
