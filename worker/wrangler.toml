@@ -9,12 +9,12 @@ compatibility_flags = ["nodejs_compat"]
 # "meditor-shares") and pasted here. Until M2, run `wrangler kv namespace create
 # SHARES` and use the generated id for local/preview deploys.
 kv_namespaces = [
-  { binding = "SHARES", id = "REPLACE_WITH_KV_NAMESPACE_ID", preview_id = "REPLACE_WITH_PREVIEW_KV_NAMESPACE_ID" }
+  { binding = "SHARES", id = "0a66e5153712471a874cd8a39b21f25d" }
 ]
 
-# Custom-domain routes are attached in M2 once meditor.dev exists. Until then the
-# worker is reachable at meditor-share.<account>.workers.dev.
-# routes = [
-#   { pattern = "meditor.dev/api/*", zone_name = "meditor.dev" },
-#   { pattern = "meditor.dev/s/*",   zone_name = "meditor.dev" },
-# ]
+# Custom-domain routes for meditor.dev. The worker also stays reachable at
+# meditor-share.<account>.workers.dev.
+routes = [
+  { pattern = "meditor.dev/api/*", zone_name = "meditor.dev" },
+  { pattern = "meditor.dev/s/*",   zone_name = "meditor.dev" },
+]
